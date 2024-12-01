@@ -3,21 +3,19 @@ from typing import List, Tuple
 
 
 def load_data() -> Tuple[List[int], List[int]]:
-    list_a = []
-    list_b = []
+    list_l = []
+    list_r = []
     for line in sys.stdin.readlines():
         components = line.split()
-        list_a.append(int(components[0]))
-        list_b.append(int(components[1]))
-    return (list_a, list_b)
+        list_l.append(int(components[0]))
+        list_r.append(int(components[1]))
+    return (list_l, list_r)
 
 
 def main():
-    list_a, list_b = load_data()
-    list_a.sort()
-    list_b.sort()
-    diff = sum(abs(a - b) for a, b in zip(list_a, list_b))
-    print(f"dif: {diff}")
+    list_l, list_r = load_data()
+    score = sum(v * sum(v == q for q in list_r) for v in list_l)
+    print(f"score: {score}")
 
 
 if __name__ == "__main__":
