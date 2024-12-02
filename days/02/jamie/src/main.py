@@ -24,9 +24,21 @@ def is_safe(numbers: List[int]) -> bool:
     return correct_delta
 
 
+def get_list_without_i(i: int, l: List[int]):
+    return list(
+        map(lambda x: x[1], itertools.filterfalse(lambda x: i == x[0], enumerate(l)))
+    )
+
+
+def trial_subset(numbers):
+    return is_safe(numbers) or any(
+        is_safe(get_list_without_i(i, numbers)) for i in range(len(numbers))
+    )
+
+
 def main():
     line_iterable = map(lambda l: [int(v) for v in l.split()], sys.stdin)
-    safe_line_count = sum(is_safe(line) for line in line_iterable)
+    safe_line_count = sum(trial_subset(line) for line in line_iterable)
     print(f"safe_line_count: {safe_line_count}")
 
 
@@ -44,3 +56,25 @@ def test_is_safe():
         [1, 3, 6, 7, 9],
     ]
     assert is_safe(test_data[0])
+    assert not is_safe(test_data[1])
+    assert not is_safe(test_data[2])
+    assert not is_safe(test_data[3])
+    assert not is_safe(test_data[4])
+    assert is_safe(test_data[5])
+
+
+def test_is_safe2():
+    test_data = [
+        [7, 6, 4, 2, 1],
+        [1, 2, 7, 8, 9],
+        [9, 7, 6, 2, 1],
+        [1, 3, 2, 4, 5],
+        [8, 6, 4, 4, 1],
+        [1, 3, 6, 7, 9],
+    ]
+    assert trial_subset(test_data[0])
+    assert not trial_subset(test_data[1])
+    assert not trial_subset(test_data[2])
+    assert trial_subset(test_data[3])
+    assert trial_subset(test_data[4])
+    assert trial_subset(test_data[5])
