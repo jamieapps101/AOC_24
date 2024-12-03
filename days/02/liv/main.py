@@ -28,57 +28,77 @@ def read_file(file_path: str) -> List[List[int]]:
     print("Report: ",reports)
     return reports
 
-def safety_checker(reports: List[List[int]]) -> int:
+def check_report(report: List[int]) -> int:
+    increase_count = 0
+    decrease_count = 0
+    difference = 0
     safe_number = 0
-    for report in reports:
-        increase_count = 0
-        decrease_count = 0
-        difference = 0
-        for level_count in range(len(report)):
-            print("Level Count: ",level_count)
-            print("Report: ",report)
-            print("Line Length: ",len(report))
-            print("Level Value: ",report[level_count])
-            print("Level Count + 1: ",level_count + 1)
-            if level_count == len(report) - 1:
-                print("End of line")
-                continue
-            # print("Level Value + 1: ",report[level_count + 1])
-            elif report[level_count] == report[level_count + 1]:
-                print("Level values are identical - unsafe report")
+    for level_count in range(len(report)):
+        print("Level Count: ",level_count)
+        print("Report: ",report)
+        print("Line Length: ",len(report))
+        print("Level Value: ",report[level_count])
+        print("Level Count + 1: ",level_count + 1)
+        if level_count == len(report) - 1:
+            print("End of line")
+            continue
+        elif report[level_count] == report[level_count + 1]:
+            print("Level values are identical - unsafe report")
+            break
+        elif report[level_count] < report[level_count + 1]:
+            difference = report[level_count + 1] - report[level_count]
+            print("Difference: ",difference)
+            if difference > 3:
+                print("Difference greater than 3 - unsafe report")
                 break
-            elif report[level_count] < report[level_count + 1]:
-                difference = report[level_count + 1] - report[level_count]
-                print("Difference: ",difference)
-                if difference > 3:
-                    print("Difference greater than 3 - unsafe report")
-                    break
-                else:
-                    increase_count = increase_count + 1
-                    print("Increase counter incremented: ",increase_count)
-            elif report[level_count] > report[level_count + 1]:
-                difference = report[level_count] - report[level_count + 1]
-                print("Difference: ",difference)
-                if difference > 3:
-                    print("Difference greater than 3 - unsafe report")
-                    break
-                else:
-                    decrease_count = decrease_count + 1
-                    print("Decrease counter incremented: ",decrease_count)
             else:
-                print("Error - missing scenario")
+                increase_count = increase_count + 1
+                print("Increase counter incremented: ",increase_count)
+        elif report[level_count] > report[level_count + 1]:
+            difference = report[level_count] - report[level_count + 1]
+            print("Difference: ",difference)
+            if difference > 3:
+                print("Difference greater than 3 - unsafe report")
+                break
+            else:
+                decrease_count = decrease_count + 1
+                print("Decrease counter incremented: ",decrease_count)
+        else:
+            print("Error - missing scenario")
         print("Increase count at end of report: ",increase_count)
         print("Decrease count at end of report: ",decrease_count)
         if increase_count == len(report) - 1 and decrease_count == 0:
             print("Only increasing - safe report!")
             safe_number = safe_number + 1
-            print("Safe number of reports: ",safe_number)
+            # print("Safe number of reports: ",safe_number)
         elif decrease_count == len(report) - 1 and increase_count == 0:
             print("Only decreasing - safe report!")
             safe_number = safe_number + 1
-            print("Safe number of reports: ",safe_number)
+            # print("Safe number of reports: ",safe_number)
         else:
             print("Unsafe report")
+    if safe_number == 1:
+        print("Report is safe")
+    else:
+        print("Report is unsafe")
+    return safe_number
+
+def safety_checker(reports: List[List[int]]) -> int:
+    safe_number = 0
+    for report in reports:
+        if check_report(report) == 1:
+            safe_number = safe_number + 1
+        else:
+            for number in range(len(report)):
+                report_copy = report.copy()
+                report_copy.pop(number)
+                print("Report after number removed: ",report_copy)
+                if check_report(report_copy) == 1:
+                    print("Report is safe!")
+                    safe_number = safe_number + 1
+                    break
+                else:
+                    print("Report unsafe!")
     print("Final safe number of reports: ",safe_number)
     return safe_number
 
