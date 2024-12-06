@@ -50,13 +50,34 @@ def get_middle_item(change: List[int]) -> int:
     return change[int((change_len - 1) / 2)]
 
 
+def shuffle_change(change: List[int], rules: Dict[int, List[int]]) -> List[int]:
+    while True:
+        change_made = False
+        # find problematic entry
+        for i in range(len(change)):
+            v = change[i]
+            for rule_entry in rules.get(v, []):
+                # if rule entry exists before the intended number
+                if rule_entry in change[:i]:
+                    change.remove(rule_entry)
+                    change.insert(i, rule_entry)
+                    change_made = True
+
+        if not change_made:
+            break
+
+    return change
+
+
 def main():
     stdin = sys.stdin
     rules = load_rules(stdin)
     changes = load_changes(stdin)
     sum = 0
     for change in changes:
-        if not change_breaks_rules(change, rules):
+        if change_breaks_rules(change, rules):
+            change = shuffle_change(change, rules)
+            assert not change_breaks_rules(change, rules)
             sum += get_middle_item(change)
 
     print(f"{sum=}")
@@ -94,3 +115,13 @@ def test_change_breaks_rules():
     assert change_breaks_rules([75, 97, 47, 61, 53], rules)
     assert change_breaks_rules([61, 13, 29], rules)
     assert change_breaks_rules([97, 13, 75, 29, 47], rules)
+
+
+def test_shuffle_change():
+    rules = None
+    with open("days/05/jamie/data/test_data.txt") as fp:
+        rules = load_rules(fp)
+
+    assert shuffle_change([75, 97, 47, 61, 53], rules) == [97, 75, 47, 61, 53]
+    assert shuffle_change([61, 13, 29], rules) == [61, 29, 13]
+    assert shuffle_change([97, 13, 75, 29, 47], rules) == [97, 75, 47, 29, 13]
