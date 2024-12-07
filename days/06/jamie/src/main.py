@@ -1,9 +1,11 @@
 from __future__ import annotations
-from typing import List, Tuple, Iterator
+from typing import List, Tuple, Iterator, Optional
 import sys
-import itertools
-import functools
+import copy
 from enum import IntEnum
+import multiprocessing
+import itertools
+import datetime
 
 
 class Direction(IntEnum):
@@ -88,8 +90,10 @@ class Map:
     def set_size(self, size: Tuple[int, int]):
         self.size = size
 
-    def add_obstruction(self, obstruction: Tuple[int, int]):
+    def add_obstruction(self, obstruction: Tuple[int, int]) -> bool:
+        exists = obstruction in self.obstructions
         self.obstructions.add(obstruction)
+        return exists
 
     def step(self) -> Tuple[int, int]:
         assert self.guard is not None
@@ -126,16 +130,52 @@ class Map:
         )
 
 
-def main():
-    map = Map.build_from_line_iter(sys.stdin)
-    # map.print()
-    locations = set()
-    # locations.add(map.guard.location)
-    while map.guard_on_map():
-        locations.add(map.guard.location)
-        map.step()
+def creates_loop(arg: Tuple[Map, Optional[Tuple[int, int]]]) -> bool:
+    (map, new_obstruction) = arg
+    if map.add_obstruction(new_obstruction):
+        return False
+    history = set()
+    # time_in_previous_location
+    loop_found = False
+    iter_counter = 0
+    while map.guard_on_map() and iter_counter < 100000:
+        state = (map.guard.location, map.guard.direction)
+        if state in history:
+            # ie we've found a point in history where
+            # we were in the same location traveling in the same location
+            return True
 
-    print(f"locations: {len(locations)}")
+        history.add(state)
+        map.step()
+        iter_counter += 1
+
+    if iter_counter == 100000:
+        print(f"{datetime.datetime.now()}: fuck", flush=True)
+
+    return loop_found
+
+
+def progress(index: int, value: bool) -> bool:
+    if index % 1000 == 0:
+        print(f"index: {index}", flush=True)
+    return value
+
+
+def main():
+    lab_map = Map.build_from_line_iter(sys.stdin)
+    x_max, y_max = lab_map.size
+    loop_locations = 0
+    loc_iter = itertools.product(range(x_max), range(y_max))
+    arg_iter = map(lambda l: (copy.deepcopy(lab_map), l), loc_iter)
+    with multiprocessing.Pool(8) as pool:
+        loop_iter = pool.imap(creates_loop, arg_iter, chunksize=1000)
+        counted_loop_iter = list(itertools.starmap(progress, enumerate(loop_iter)))
+        print(f"loop_locations: {sum(counted_loop_iter)}")
+
+    # for x in range(map.size[0]):
+    #     for y in range(map.size[1]):
+    #         if creates_loop(copy.deepcopy(map),(x,y)):
+    #             loop_locations+=1
 
 
 if __name__ == "__main__":
